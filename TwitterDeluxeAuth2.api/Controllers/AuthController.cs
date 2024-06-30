@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TwitterDeluxeAuth2.api.Models;
 using TwitterThrice.common;
 using TwitterThrice.domain;
 
@@ -21,11 +20,39 @@ namespace TwitterDeluxeAuth2.api.Controllers {
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> RegisterUser([FromBody] UserRegistrationDto model) {
-            var result = await _userService.RegisterUser(model);
-            if (!result)
-                return StatusCode(StatusCodes.Status500InternalServerError, new { Status = "Error", Message = "User creation failed or user already exists." });
 
-            return Ok(new { Status = "Success", Message = "User created successfully!" });
+            if (model == null) {
+                return BadRequest("User registration data is required");
+            }
+            if (string.IsNullOrWhiteSpace(model.Username)) {
+                return BadRequest("Username is required");
+            }
+            if (string.IsNullOrWhiteSpace(model.Email)) {
+                return BadRequest("Email is required");
+            }
+            if (string.IsNullOrWhiteSpace(model.Password)) {
+                return BadRequest("Password is required");
+            }
+            if (Helper.ContainsXss(model.Username)) {
+                return BadRequest("Username contains invalid characters");
+            }
+            if (Helper.ContainsXss(model.Password)) {
+                return BadRequest("Password contains invalid characters");
+            }
+            if (Helper.ContainsXss(model.Email)) {
+                return BadRequest("Email contains invalid characters");
+            }
+
+
+            try {
+                var result = await _userService.RegisterUser(model);
+                if (!result)
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { Status = "Error", Message = "User creation failed or user already exists." });
+
+                return Ok(new { Status = "Success", Message = "User created successfully!" });
+            }catch (Exception) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Status = "Error", Message = "Failed to register user." });
+            }
         }
 
         [HttpPost("login")]
@@ -33,11 +60,31 @@ namespace TwitterDeluxeAuth2.api.Controllers {
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Login([FromBody] UserLoginDto model) {
-            var token = await _userService.Login(model);
-            if (token == null)
-                return Unauthorized();
+            if (model == null) {
+                return BadRequest("User registration data is required");
+            }
+            if (string.IsNullOrWhiteSpace(model.Username)) {
+                return BadRequest("Username is required");
+            }
+            if (string.IsNullOrWhiteSpace(model.Password)) {
+                return BadRequest("Password is required");
+            }
+            if (Helper.ContainsXss(model.Username)) {
+                return BadRequest("Username contains invalid characters");
+            }
+            if (Helper.ContainsXss(model.Password)) {
+                return BadRequest("Password contains invalid characters");
+            }
 
-            return Ok(new { token = token, expiration = 2 }); 
+            try {
+                var token = await _userService.Login(model);
+                if (token == null)
+                    return Unauthorized();
+
+                return Ok(new { token = token, expiration = 2 });
+            }catch (Exception) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Status = "Error", Message = "Failed to login." });
+            }
         }
     }
 }

@@ -19,12 +19,27 @@ namespace TwitterDeluxeAuth2.api.Controllers {
             _tweetService = tweetService;
             _userService = userService;
         }
-        
+
         [HttpPost("create")]
         [Authorize] 
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<bool>> CreateTweet([FromBody] TweetPost tweetPost) {
+            if (tweetPost == null) {
+                return BadRequest("Tweet is required");
+            }
+
+            if (string.IsNullOrWhiteSpace(tweetPost.Message)) {
+                return BadRequest("Message is required");
+            }
+
+            if (tweetPost.Message.Length > Constants.MaxTweetMessageLength) {
+                return BadRequest($"Message is too long. Max length is {Constants.MaxTweetMessageLength} characters");
+            }
+
+            if (Helper.ContainsXss(tweetPost.Message)) {
+                return BadRequest("Message contains invalid characters");
+            }
 
             try {
                 // get username from bearer token
@@ -59,12 +74,12 @@ namespace TwitterDeluxeAuth2.api.Controllers {
         [ResponseCache(Duration = 60)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<Tweet>>> GetRecentTopTenTweets() {
-            var result = await _tweetService.GetRecentTopTenTweets();
-            return Ok(result);
-        }
-
-        private bool EmailIsValid(string email, string onFileEmail) {
-            return BCrypt.Net.BCrypt.Verify(email, onFileEmail);
+            try {
+                var result = await _tweetService.GetRecentTopTenTweets();
+                return Ok(result);
+            } catch (Exception) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Status = "Error", Message = "Failed to get recent tweets." });
+            }
         }
 
     }
