@@ -20,12 +20,9 @@ namespace TwitterThrice.data {
             if (userExists != null)
                 return false;
 
-            // secure sensitive information
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(user.Password);
-            var hashedEmail = BCrypt.Net.BCrypt.HashPassword(user.Email);
 
             var result = await db.ExecuteAsync("INSERT INTO Members (Id, Username, Email, Password) VALUES (@Id, @Username, @Email, @Password)",
-                new { Id = Guid.NewGuid(), user.Username, Email = hashedEmail, Password = hashedPassword });
+                new { Id = Guid.NewGuid(), user.Username, Email = user.Email, Password = user.Password });
 
             return result > 0;
         }

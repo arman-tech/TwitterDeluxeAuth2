@@ -5,5 +5,6 @@ namespace TwitterThrice.domain {
         Task<bool> RegisterUser(UserRegistrationDto userRegisteration);
         Task<string?> Login(UserLoginDto userLogin);
         Task<User> GetUserByUsername(string username);
+        Task<User> GetUserByEmail(string email);
     }
 }

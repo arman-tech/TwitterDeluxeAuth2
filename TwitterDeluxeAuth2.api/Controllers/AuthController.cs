@@ -33,13 +33,13 @@ namespace TwitterDeluxeAuth2.api.Controllers {
             if (string.IsNullOrWhiteSpace(model.Password)) {
                 return BadRequest("Password is required");
             }
-            if (Helper.ContainsXss(model.Username)) {
+            if (model.Username.ContainsXss()) {
                 return BadRequest("Username contains invalid characters");
             }
-            if (Helper.ContainsXss(model.Password)) {
+            if (model.Password.ContainsXss()) {
                 return BadRequest("Password contains invalid characters");
             }
-            if (Helper.ContainsXss(model.Email)) {
+            if (model.Email.ContainsXss()) {
                 return BadRequest("Email contains invalid characters");
             }
 
@@ -63,16 +63,17 @@ namespace TwitterDeluxeAuth2.api.Controllers {
             if (model == null) {
                 return BadRequest("User registration data is required");
             }
-            if (string.IsNullOrWhiteSpace(model.Username)) {
+            if (string.IsNullOrWhiteSpace(model.Email)) {
                 return BadRequest("Username is required");
             }
             if (string.IsNullOrWhiteSpace(model.Password)) {
                 return BadRequest("Password is required");
             }
-            if (Helper.ContainsXss(model.Username)) {
+
+            if (model.Email.ContainsXss()) {
                 return BadRequest("Username contains invalid characters");
             }
-            if (Helper.ContainsXss(model.Password)) {
+            if (model.Password.ContainsXss()) {
                 return BadRequest("Password contains invalid characters");
             }
 

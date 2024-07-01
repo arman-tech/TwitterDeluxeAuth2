@@ -5,6 +5,7 @@ using TwitterThrice.data;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Configuration;
+using TwitterDeluxeAuth2.common.Exceptions;
 
 namespace TwitterThrice.domain {
     public class UserService : IUserService {
@@ -21,8 +22,8 @@ namespace TwitterThrice.domain {
         public async Task<bool> RegisterUser(UserRegistrationDto userRegistrationDto) {
             return await _userRespository.CreateUser(new User {
                 Username = userRegistrationDto.Username,
-                Email = userRegistrationDto.Email,
-                Password = userRegistrationDto.Password
+                Email = userRegistrationDto.Email.Crypt(),
+                Password = userRegistrationDto.Password.Crypt()
             });
         }
 
@@ -31,11 +32,13 @@ namespace TwitterThrice.domain {
             if (userLoginDto == null)
                 throw new ArgumentNullException(nameof(userLoginDto));
 
-            var user = await _userRespository.GetUserByUsername(userLoginDto.Username);
+            // we need to encrypt the email to match the encrypted email in the database
+            var encryptedEmail = userLoginDto.Email.Crypt();
+            var user = await _userRespository.GetUserByEmail(encryptedEmail);
 
             if (user != null) {
-                bool passwordMatch = BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.Password);
-                if (passwordMatch) {
+                var encryptedPassword = userLoginDto.Password.Crypt();                
+                if (user.Password == encryptedPassword) {
                     // Generate and return JWT token
                     return GenerateJwtToken(user);
                 }
@@ -56,6 +59,22 @@ namespace TwitterThrice.domain {
 
             return user;
         }
+
+        public async Task<User> GetUserByEmail(string email) {
+
+            if (string.IsNullOrEmpty(email))
+                throw new ArgumentNullException(nameof(email));
+
+            // encrypt email to match the encrypted email in the database
+            var encryptedEmail = email.Crypt();
+            var user = await _userRespository.GetUserByEmail(encryptedEmail);
+
+            if (user == null)
+                throw new AuthenticationFailedException("User not found");
+
+            return user;
+        }
+
 
         private string GenerateJwtToken(User user) {
             var tokenHandler = new JwtSecurityTokenHandler();

@@ -37,7 +37,7 @@ namespace TwitterDeluxeAuth2.api.Controllers {
                 return BadRequest($"Message is too long. Max length is {Constants.MaxTweetMessageLength} characters");
             }
 
-            if (Helper.ContainsXss(tweetPost.Message)) {
+            if (tweetPost.Message.ContainsXss()) {
                 return BadRequest("Message contains invalid characters");
             }
 
@@ -48,11 +48,12 @@ namespace TwitterDeluxeAuth2.api.Controllers {
                 if (string.IsNullOrEmpty(username))
                     throw new AuthenticationFailedException("Invalid token");
 
-                // get user by username
-                var user = await _userService.GetUserByUsername(username);
+                // get user by email
+                var user = await _userService.GetUserByEmail(tweetPost.Email);
 
                 // should there be a situation where the user is deleted or not found, throw an exception
-                if (user == null)
+                // also, ensure that the user is the same as the one in the token
+                if (user == null || user.Username != username)
                     throw new AuthenticationFailedException("User not found");
 
                 var result = await _tweetService.CreateTweet(new Tweet {
@@ -64,8 +65,11 @@ namespace TwitterDeluxeAuth2.api.Controllers {
 
                 return Ok(result);
             }
-            catch (AuthenticationFailedException afe) {
-                return Unauthorized(afe.Message);
+            catch (Exception ex) when (ex is AuthenticationFailedException) {
+                return Unauthorized(ex.Message);
+            }
+            catch(Exception) {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Status = "Error", Message = "Failed to create tweet." });
             }
         }
 
