@@ -65,7 +65,7 @@ namespace TwitterDeluxeAuth2.api.Controllers {
 
                 return Ok(result);
             }
-            catch (Exception ex) when (ex is AuthenticationFailedException) {
+            catch (AuthenticationFailedException ex) {
                 return Unauthorized(ex.Message);
             }
             catch(Exception) {

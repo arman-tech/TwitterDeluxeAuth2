@@ -69,9 +69,6 @@ namespace TwitterThrice.domain {
             var encryptedEmail = email.Crypt();
             var user = await _userRespository.GetUserByEmail(encryptedEmail);
 
-            if (user == null)
-                throw new AuthenticationFailedException("User not found");
-
             return user;
         }
 
