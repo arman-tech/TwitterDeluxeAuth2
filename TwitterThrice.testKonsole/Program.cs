@@ -3,15 +3,14 @@ using Dapper;
 using Bogus;
 using Microsoft.Extensions.Configuration;
 using TwitterThrice.common;
-using System.ComponentModel.DataAnnotations;
 
 
 class Program {
 
     static void CreateRecords(SqlConnection connection, Faker faker, string username, string email, string password) {
         var memberId = Guid.NewGuid();
-        var hashedEmail = BCrypt.Net.BCrypt.HashPassword(email);
-        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+        var hashedEmail = email.Crypt();
+        var hashedPassword = password.Crypt();
         var createdDate = faker.Date.Past(2);
 
         connection.Execute("INSERT INTO Members (Id, Username, Email, Password, CreatedDate) VALUES (@Id, @Username, @Email, @Password, @CreatedDate)",
@@ -61,7 +60,9 @@ class Program {
             // Generate Members
             for (int i = 0; i < numberOfMembers; i++) {
 
-                CreateRecords(connection, faker, Guid.NewGuid().ToString(), faker.Internet.Email(), faker.Internet.Password());
+                // we need email to be unique, hence why we are using Guid.NewGuid().ToString() with email address.
+                var email = Guid.NewGuid().ToString() + faker.Internet.Email();
+                CreateRecords(connection, faker, faker.Internet.UserName(), email, faker.Internet.Password());
 
                 // refresh one line in console displaying the percentage completed
                 Console.SetCursorPosition(0, Console.CursorTop);
