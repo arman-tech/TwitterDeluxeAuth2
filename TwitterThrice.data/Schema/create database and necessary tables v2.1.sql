@@ -12,8 +12,8 @@ GO
 -- Create the Members table
 CREATE TABLE Members (
     Id UNIQUEIDENTIFIER PRIMARY KEY,
-	Username NVARCHAR(255) UNIQUE NOT NULL,
-    Email NVARCHAR(255)  NOT NULL,
+	Username NVARCHAR(255) NOT NULL,
+    Email NVARCHAR(255) UNIQUE NOT NULL,
     Password NVARCHAR(255) NOT NULL,
     CreatedDate DATETIME2 DEFAULT GETDATE()
 );
@@ -32,6 +32,7 @@ GO
 CREATE INDEX IX_Tweets_PostedDate ON dbo.Tweets(PostedDate DESC);
 GO
 
-CREATE INDEX IX_Members_Username ON dbo.Members(Username);
+-- introduce indexing to make the query process faster when searching by email
+CREATE INDEX IX_Members_Email ON dbo.Members(Email);
 GO
 
