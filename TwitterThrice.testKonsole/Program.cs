@@ -43,7 +43,7 @@ class Program {
 
 
         // max record is 25000
-        var numberOfMembers = 25000;
+        var numberOfMembers = 250000;
 
         using (var connection = new SqlConnection(connectionString)) {
             connection.Open();
